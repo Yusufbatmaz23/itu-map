@@ -9,12 +9,13 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
   
   <style>
-    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
     #map { height: 100vh; width: 100vw; z-index: 1; }
-    .control-panel {
+    
+    #controlPanel {
       position: absolute;
       top: 15px;
-      left: 15px; /* Mobilde daha iyi durması için sola çektim */
+      left: 15px; 
       z-index: 1000;
       background: white;
       padding: 15px;
@@ -23,8 +24,37 @@
       width: 280px;
       max-height: 85vh;
       overflow-y: auto;
+      transition: all 0.3s ease;
     }
-    select, button { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
+    
+    #openMenuBtn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 999;
+      background: #0033a0;
+      color: white;
+      font-weight: bold;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .close-btn {
+      float: right;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #555;
+      margin-top: -5px;
+      margin-right: -5px;
+    }
+
+    select, button.full-width { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
     .btn-route { background: #0033a0; color: white; font-weight: bold; cursor: pointer; border: none; padding: 10px; }
     .btn-route:hover { background: #002277; }
     .btn-gps { background: #28a745; color: white; font-weight: bold; cursor: pointer; border: none; padding: 8px; margin-bottom: 15px; }
@@ -40,19 +70,21 @@
       color: #333;
       text-align: center;
     }
-    /* Orijinal karmaşık yol tarifini gizleyip kendi temiz bilgi kutumuzu kullanıyoruz */
     .leaflet-routing-container { display: none !important; }
   </style>
 </head>
 <body>
 
-  <div class="control-panel">
-    <h3 style="margin-top: 0; color: #0033a0; text-align: center;">İTÜ Ayazağa Navigasyon</h3>
+  <button id="openMenuBtn" onclick="toggleMenu()">🔍 Rota Ara</button>
+
+  <div id="controlPanel">
+    <button class="close-btn" onclick="toggleMenu()">✖</button>
+    <h3 style="margin-top: 0; color: #0033a0; text-align: left;">İTÜ Navigasyon</h3>
     
-    <button class="btn-gps" onclick="useCurrentLocation()">📍 Konumumu Bul (GPS)</button>
+    <button class="btn-gps full-width" onclick="useCurrentLocation()">📍 Konumumu Bul (GPS)</button>
 
     <label><b>Neredesin? (Başlangıç):</b></label>
-    <select id="startSelect">
+    <select id="startSelect" class="full-width">
       <optgroup label="Fakülteler & Derslikler">
         <option value="41.1086,29.0255">Uçak ve Uzay Bilimleri Fak.</option>
         <option value="41.1119,29.0229">Yabancı Diller Yüksekokulu (YDY)</option>
@@ -85,7 +117,7 @@
     </select>
 
     <label><b>Nereye Gideceksin? (Hedef):</b></label>
-    <select id="endSelect">
+    <select id="endSelect" class="full-width">
       <optgroup label="Fakülteler & Derslikler">
         <option value="41.1077,29.0245">Merkezi Derslik (MED)</option>
         <option value="41.1086,29.0255">Uçak ve Uzay Bilimleri Fak.</option>
@@ -117,7 +149,7 @@
       </optgroup>
     </select>
 
-    <button class="btn-route" onclick="calculateRoute()">Rotayı Çiz</button>
+    <button class="btn-route full-width" onclick="calculateRoute()">Rotayı Çiz</button>
     
     <div id="routeInfo"></div>
   </div>
@@ -140,7 +172,19 @@
     let gpsLat = null;
     let gpsLng = null;
 
-    // Telefonun GPS'ini kullanarak konumu bulma fonksiyonu
+    function toggleMenu() {
+      const panel = document.getElementById("controlPanel");
+      const btn = document.getElementById("openMenuBtn");
+      
+      if (panel.style.display === "none") {
+        panel.style.display = "block";
+        btn.style.display = "none";
+      } else {
+        panel.style.display = "none";
+        btn.style.display = "block";
+      }
+    }
+
     function useCurrentLocation() {
       const infoBox = document.getElementById('routeInfo');
       if (navigator.geolocation) {
@@ -151,12 +195,10 @@
           gpsLat = position.coords.latitude;
           gpsLng = position.coords.longitude;
           
-          // Haritada bulunduğun yere mavi nokta koy
           if(userLocationMarker) { map.removeLayer(userLocationMarker); }
           userLocationMarker = L.circleMarker([gpsLat, gpsLng], {color: '#007bff', radius: 8, fillOpacity: 0.8}).addTo(map).bindPopup("Buradasınız!").openPopup();
           map.setView([gpsLat, gpsLng], 17);
           
-          // Açılır menüye "Anlık Konumum" seçeneğini ekle ve seç
           let startSelect = document.getElementById("startSelect");
           if(!document.getElementById("currOpt")) {
              let opt = document.createElement('option');
@@ -169,7 +211,7 @@
           
           infoBox.innerHTML = "✅ Konum bulundu! Şimdi hedef seçip Rotayı Çiz'e basın.";
         }, function(error) {
-          infoBox.innerHTML = "❌ Konum alınamadı. Telefonunuzdan tarayıcıya konum izni verdiğinizden emin olun.";
+          infoBox.innerHTML = "❌ Konum alınamadı. Cihaz izinlerini kontrol edin.";
         }, { enableHighAccuracy: true });
       } else {
         alert("Tarayıcınız konum özelliğini desteklemiyor.");
@@ -182,7 +224,6 @@
 
       let startLat, startLng;
 
-      // Başlangıç noktası GPS mi yoksa listeden seçili bir yer mi kontrol et
       if (startValue === "current" && gpsLat !== null) {
         startLat = gpsLat;
         startLng = gpsLng;
@@ -208,25 +249,30 @@
           L.latLng(endLat, endLng)
         ],
         router: L.Routing.osrmv1({
-          profile: 'foot' // Arabayı değil, yaya yollarını seçer
+          serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1',
+          profile: 'foot' 
         }),
         lineOptions: {
-          styles: [{color: '#e63946', opacity: 0.9, weight: 6}] // İTÜ kırmızısı gibi bir rota rengi
+          styles: [{color: '#e63946', opacity: 0.9, weight: 6}] 
         },
         createMarker: function() { return null; } 
       }).addTo(map);
 
-      // Rota çizildiğinde süreyi ve mesafeyi hesaplayıp ekrana yazdır
       routingControl.on('routesfound', function(e) {
-        const distance = e.routes[0].summary.totalDistance; // metre cinsinden
-        const time = e.routes[0].summary.totalTime; // saniye cinsinden
+        const distance = e.routes[0].summary.totalDistance; 
+        const time = e.routes[0].summary.totalTime; 
         
-        const distKm = (distance / 1000).toFixed(2); // km'ye çevir
-        const timeMin = Math.round(time / 60); // dakikaya çevir
+        const distKm = (distance / 1000).toFixed(2); 
+        const timeMin = Math.round(time / 60); 
         
         const infoBox = document.getElementById('routeInfo');
         infoBox.style.display = "block";
         infoBox.innerHTML = `🚶‍♂️ <b>Mesafe:</b> ${distKm} km <br> ⏱️ <b>Tahmini Yürüme:</b> ~${timeMin} dk`;
+        
+        // Rota bulunduktan 1 saniye sonra paneli otomatik kapat
+        setTimeout(() => {
+          toggleMenu();
+        }, 1000);
       });
     }
   </script>
