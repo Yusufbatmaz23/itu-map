@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İTÜ Map - Ayazağa</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet Routing Machine CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+  
+  <style>
+    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    #map { height: 100vh; width: 100vw; z-index: 1; }
+    .control-panel {
+      position: absolute;
+      top: 15px;
+      left: 50px;
+      z-index: 1000;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      width: 280px;
+    }
+    select, button { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #0033a0; color: white; font-weight: bold; cursor: pointer; border: none; }
+    button:hover { background: #002277; }
+    /* Hide the default routing instructions box to keep it clean for mobile */
+    .leaflet-routing-container { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="control-panel">
+    <h3 style="margin-top: 0; color: #0033a0; text-align: center;">İTÜ Route Finder</h3>
+    
+    <label><b>Start:</b></label>
+    <select id="startSelect">
+      <option value="41.1054,29.0234">İTÜ Stadyum</option>
+      <option value="41.1042,29.0198">EEB (Elektrik-Elektronik)</option>
+      <option value="41.1077,29.0245">Merkezi Derslik (MED)</option>
+      <option value="41.1082,29.0229">Mustafa İnan Kütüphanesi</option>
+      <option value="41.1049,29.0210">75. Yıl Yemekhane</option>
+      <option value="41.1030,29.0252">Metro Çıkışı (Ana Kapı)</option>
+    </select>
+
+    <label><b>Destination:</b></label>
+    <select id="endSelect">
+      <option value="41.1082,29.0229">Mustafa İnan Kütüphanesi</option>
+      <option value="41.1042,29.0198">EEB (Elektrik-Elektronik)</option>
+      <option value="41.1077,29.0245">Merkezi Derslik (MED)</option>
+      <option value="41.1054,29.0234">İTÜ Stadyum</option>
+      <option value="41.1049,29.0210">75. Yıl Yemekhane</option>
+      <option value="41.1030,29.0252">Metro Çıkışı (Ana Kapı)</option>
+    </select>
+
+    <button onclick="calculateRoute()">Find Route</button>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet Routing Machine JS -->
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+  <script>
+    // Initialize Map centered on İTÜ Ayazağa
+    const map = L.map('map').setView([41.1055, 29.0235], 16);
+
+    // Add OpenStreetMap tiles (shows student footpaths!)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let routingControl = null;
+
+    function calculateRoute() {
+      // Get selected coordinates
+      const startVal = document.getElementById("startSelect").value.split(",");
+      const endVal = document.getElementById("endSelect").value.split(",");
+
+      const startLat = parseFloat(startVal[0]);
+      const startLng = parseFloat(startVal[1]);
+      const endLat = parseFloat(endVal[0]);
+      const endLng = parseFloat(endVal[1]);
+
+      // Remove existing route if there is one
+      if (routingControl !== null) {
+        map.removeControl(routingControl);
+      }
+
+      // Draw new route using OSRM walking profile
+      routingControl = L.Routing.control({
+        waypoints: [
+          L.latLng(startLat, startLng),
+          L.latLng(endLat, endLng)
+        ],
+        router: L.Routing.osrmv1({
+          profile: 'foot' // Uses walking paths instead of car roads
+        }),
+        lineOptions: {
+          styles: [{color: '#FF0000', opacity: 0.8, weight: 5}] // Red line for the path
+        },
+        createMarker: function(i, wp, nWps) {
+          // Add simple markers for start and end
+          return L.marker(wp.latLng);
+        }
+      }).addTo(map);
+    }
+  </script>
+</body>
+</html>
