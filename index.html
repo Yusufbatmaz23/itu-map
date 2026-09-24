@@ -1,13 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>İTÜ Map - Ayazağa</title>
   
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Leaflet Routing Machine CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
   
   <style>
@@ -16,100 +14,220 @@
     .control-panel {
       position: absolute;
       top: 15px;
-      left: 50px;
+      left: 15px; /* Mobilde daha iyi durması için sola çektim */
       z-index: 1000;
       background: white;
       padding: 15px;
       border-radius: 8px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       width: 280px;
+      max-height: 85vh;
+      overflow-y: auto;
     }
-    select, button { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; }
-    button { background: #0033a0; color: white; font-weight: bold; cursor: pointer; border: none; }
-    button:hover { background: #002277; }
-    /* Hide the default routing instructions box to keep it clean for mobile */
+    select, button { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
+    .btn-route { background: #0033a0; color: white; font-weight: bold; cursor: pointer; border: none; padding: 10px; }
+    .btn-route:hover { background: #002277; }
+    .btn-gps { background: #28a745; color: white; font-weight: bold; cursor: pointer; border: none; padding: 8px; margin-bottom: 15px; }
+    .btn-gps:hover { background: #218838; }
+    
+    #routeInfo {
+      display: none;
+      background: #e9ecef;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #333;
+      text-align: center;
+    }
+    /* Orijinal karmaşık yol tarifini gizleyip kendi temiz bilgi kutumuzu kullanıyoruz */
     .leaflet-routing-container { display: none !important; }
   </style>
 </head>
 <body>
 
   <div class="control-panel">
-    <h3 style="margin-top: 0; color: #0033a0; text-align: center;">İTÜ Route Finder</h3>
+    <h3 style="margin-top: 0; color: #0033a0; text-align: center;">İTÜ Ayazağa Navigasyon</h3>
     
-    <label><b>Start:</b></label>
+    <button class="btn-gps" onclick="useCurrentLocation()">📍 Konumumu Bul (GPS)</button>
+
+    <label><b>Neredesin? (Başlangıç):</b></label>
     <select id="startSelect">
-      <option value="41.1054,29.0234">İTÜ Stadyum</option>
-      <option value="41.1042,29.0198">EEB (Elektrik-Elektronik)</option>
-      <option value="41.1077,29.0245">Merkezi Derslik (MED)</option>
-      <option value="41.1082,29.0229">Mustafa İnan Kütüphanesi</option>
-      <option value="41.1049,29.0210">75. Yıl Yemekhane</option>
-      <option value="41.1030,29.0252">Metro Çıkışı (Ana Kapı)</option>
+      <optgroup label="Fakülteler & Derslikler">
+        <option value="41.1086,29.0255">Uçak ve Uzay Bilimleri Fak.</option>
+        <option value="41.1119,29.0229">Yabancı Diller Yüksekokulu (YDY)</option>
+        <option value="41.1077,29.0245">Merkezi Derslik (MED)</option>
+        <option value="41.1042,29.0198">Elektrik-Elektronik Fak. (EEB)</option>
+        <option value="41.1092,29.0225">İnşaat Fakültesi</option>
+        <option value="41.1045,29.0225">Bilgisayar ve Bilişim Fak. (BBF)</option>
+        <option value="41.1070,29.0230">Fen Edebiyat Fakültesi (FEF)</option>
+        <option value="41.1065,29.0260">Kimya Metalurji Fak. (KMF)</option>
+        <option value="41.1055,29.0270">Maden Fakültesi</option>
+        <option value="41.1060,29.0210">Gemi İnşaatı ve Deniz Bil. Fak.</option>
+      </optgroup>
+      <optgroup label="Yurtlar">
+        <option value="41.1098,29.0195">Gölet Yurtları</option>
+        <option value="41.1040,29.0280">Vadi Yurtları</option>
+        <option value="41.1035,29.0230">Ayazağa Kız Yurdu</option>
+      </optgroup>
+      <optgroup label="Sosyal Alanlar & Kütüphane">
+        <option value="41.1082,29.0229">Mustafa İnan Kütüphanesi</option>
+        <option value="41.1049,29.0210">75. Yıl Öğrenci Merkezi (Yemekhane)</option>
+        <option value="41.1085,29.0185">İTÜ Gölet & Kafeler</option>
+        <option value="41.1054,29.0234">İTÜ Stadyumu</option>
+        <option value="41.1038,29.0258">Süleyman Demirel Kültür Merkezi</option>
+      </optgroup>
+      <optgroup label="Giriş Kapıları">
+        <option value="41.1030,29.0252">Ana Kapı (Metro Çıkışı)</option>
+        <option value="41.1080,29.0290">Borsa Kapısı</option>
+        <option value="41.1125,29.0240">İstinye Kapısı</option>
+      </optgroup>
     </select>
 
-    <label><b>Destination:</b></label>
+    <label><b>Nereye Gideceksin? (Hedef):</b></label>
     <select id="endSelect">
-      <option value="41.1082,29.0229">Mustafa İnan Kütüphanesi</option>
-      <option value="41.1042,29.0198">EEB (Elektrik-Elektronik)</option>
-      <option value="41.1077,29.0245">Merkezi Derslik (MED)</option>
-      <option value="41.1054,29.0234">İTÜ Stadyum</option>
-      <option value="41.1049,29.0210">75. Yıl Yemekhane</option>
-      <option value="41.1030,29.0252">Metro Çıkışı (Ana Kapı)</option>
+      <optgroup label="Fakülteler & Derslikler">
+        <option value="41.1077,29.0245">Merkezi Derslik (MED)</option>
+        <option value="41.1086,29.0255">Uçak ve Uzay Bilimleri Fak.</option>
+        <option value="41.1119,29.0229">Yabancı Diller Yüksekokulu (YDY)</option>
+        <option value="41.1042,29.0198">Elektrik-Elektronik Fak. (EEB)</option>
+        <option value="41.1092,29.0225">İnşaat Fakültesi</option>
+        <option value="41.1045,29.0225">Bilgisayar ve Bilişim Fak. (BBF)</option>
+        <option value="41.1070,29.0230">Fen Edebiyat Fakültesi (FEF)</option>
+        <option value="41.1065,29.0260">Kimya Metalurji Fak. (KMF)</option>
+        <option value="41.1055,29.0270">Maden Fakültesi</option>
+        <option value="41.1060,29.0210">Gemi İnşaatı ve Deniz Bil. Fak.</option>
+      </optgroup>
+      <optgroup label="Yurtlar">
+        <option value="41.1098,29.0195">Gölet Yurtları</option>
+        <option value="41.1040,29.0280">Vadi Yurtları</option>
+        <option value="41.1035,29.0230">Ayazağa Kız Yurdu</option>
+      </optgroup>
+      <optgroup label="Sosyal Alanlar & Kütüphane">
+        <option value="41.1082,29.0229">Mustafa İnan Kütüphanesi</option>
+        <option value="41.1049,29.0210">75. Yıl Öğrenci Merkezi (Yemekhane)</option>
+        <option value="41.1085,29.0185">İTÜ Gölet & Kafeler</option>
+        <option value="41.1054,29.0234">İTÜ Stadyumu</option>
+        <option value="41.1038,29.0258">Süleyman Demirel Kültür Merkezi</option>
+      </optgroup>
+      <optgroup label="Giriş Kapıları">
+        <option value="41.1030,29.0252">Ana Kapı (Metro Çıkışı)</option>
+        <option value="41.1080,29.0290">Borsa Kapısı</option>
+        <option value="41.1125,29.0240">İstinye Kapısı</option>
+      </optgroup>
     </select>
 
-    <button onclick="calculateRoute()">Find Route</button>
+    <button class="btn-route" onclick="calculateRoute()">Rotayı Çiz</button>
+    
+    <div id="routeInfo"></div>
   </div>
 
   <div id="map"></div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Leaflet Routing Machine JS -->
   <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
   <script>
-    // Initialize Map centered on İTÜ Ayazağa
-    const map = L.map('map').setView([41.1055, 29.0235], 16);
+    const map = L.map('map').setView([41.1065, 29.0235], 16);
 
-    // Add OpenStreetMap tiles (shows student footpaths!)
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     let routingControl = null;
+    let userLocationMarker = null;
+    let gpsLat = null;
+    let gpsLng = null;
+
+    // Telefonun GPS'ini kullanarak konumu bulma fonksiyonu
+    function useCurrentLocation() {
+      const infoBox = document.getElementById('routeInfo');
+      if (navigator.geolocation) {
+        infoBox.style.display = "block";
+        infoBox.innerHTML = "⏳ Konumunuz bulunuyor...";
+        
+        navigator.geolocation.getCurrentPosition(function(position) {
+          gpsLat = position.coords.latitude;
+          gpsLng = position.coords.longitude;
+          
+          // Haritada bulunduğun yere mavi nokta koy
+          if(userLocationMarker) { map.removeLayer(userLocationMarker); }
+          userLocationMarker = L.circleMarker([gpsLat, gpsLng], {color: '#007bff', radius: 8, fillOpacity: 0.8}).addTo(map).bindPopup("Buradasınız!").openPopup();
+          map.setView([gpsLat, gpsLng], 17);
+          
+          // Açılır menüye "Anlık Konumum" seçeneğini ekle ve seç
+          let startSelect = document.getElementById("startSelect");
+          if(!document.getElementById("currOpt")) {
+             let opt = document.createElement('option');
+             opt.id = "currOpt";
+             opt.value = "current";
+             opt.innerHTML = "📍 Anlık Konumum (GPS)";
+             startSelect.insertBefore(opt, startSelect.firstChild);
+          }
+          startSelect.value = "current";
+          
+          infoBox.innerHTML = "✅ Konum bulundu! Şimdi hedef seçip Rotayı Çiz'e basın.";
+        }, function(error) {
+          infoBox.innerHTML = "❌ Konum alınamadı. Telefonunuzdan tarayıcıya konum izni verdiğinizden emin olun.";
+        }, { enableHighAccuracy: true });
+      } else {
+        alert("Tarayıcınız konum özelliğini desteklemiyor.");
+      }
+    }
 
     function calculateRoute() {
-      // Get selected coordinates
-      const startVal = document.getElementById("startSelect").value.split(",");
+      const startValue = document.getElementById("startSelect").value;
       const endVal = document.getElementById("endSelect").value.split(",");
 
-      const startLat = parseFloat(startVal[0]);
-      const startLng = parseFloat(startVal[1]);
+      let startLat, startLng;
+
+      // Başlangıç noktası GPS mi yoksa listeden seçili bir yer mi kontrol et
+      if (startValue === "current" && gpsLat !== null) {
+        startLat = gpsLat;
+        startLng = gpsLng;
+      } else if (startValue === "current" && gpsLat === null) {
+        alert("Önce 'Konumumu Bul' butonuna basmalısınız.");
+        return;
+      } else {
+        const startSplit = startValue.split(",");
+        startLat = parseFloat(startSplit[0]);
+        startLng = parseFloat(startSplit[1]);
+      }
+
       const endLat = parseFloat(endVal[0]);
       const endLng = parseFloat(endVal[1]);
 
-      // Remove existing route if there is one
       if (routingControl !== null) {
         map.removeControl(routingControl);
       }
 
-      // Draw new route using OSRM walking profile
       routingControl = L.Routing.control({
         waypoints: [
           L.latLng(startLat, startLng),
           L.latLng(endLat, endLng)
         ],
         router: L.Routing.osrmv1({
-          profile: 'foot' // Uses walking paths instead of car roads
+          profile: 'foot' // Arabayı değil, yaya yollarını seçer
         }),
         lineOptions: {
-          styles: [{color: '#FF0000', opacity: 0.8, weight: 5}] // Red line for the path
+          styles: [{color: '#e63946', opacity: 0.9, weight: 6}] // İTÜ kırmızısı gibi bir rota rengi
         },
-        createMarker: function(i, wp, nWps) {
-          // Add simple markers for start and end
-          return L.marker(wp.latLng);
-        }
+        createMarker: function() { return null; } 
       }).addTo(map);
+
+      // Rota çizildiğinde süreyi ve mesafeyi hesaplayıp ekrana yazdır
+      routingControl.on('routesfound', function(e) {
+        const distance = e.routes[0].summary.totalDistance; // metre cinsinden
+        const time = e.routes[0].summary.totalTime; // saniye cinsinden
+        
+        const distKm = (distance / 1000).toFixed(2); // km'ye çevir
+        const timeMin = Math.round(time / 60); // dakikaya çevir
+        
+        const infoBox = document.getElementById('routeInfo');
+        infoBox.style.display = "block";
+        infoBox.innerHTML = `🚶‍♂️ <b>Mesafe:</b> ${distKm} km <br> ⏱️ <b>Tahmini Yürüme:</b> ~${timeMin} dk`;
+      });
     }
   </script>
 </body>
