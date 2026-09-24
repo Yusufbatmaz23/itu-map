@@ -32,10 +32,10 @@
       top: 15px;
       left: 15px;
       z-index: 999;
-      background: #0033a0;
-      color: white;
+      background: #FBC02D; /* Butonu sarı yaptık */
+      color: #000;
       font-weight: bold;
-      border: none;
+      border: 2px solid #F9A825;
       padding: 12px 18px;
       border-radius: 8px;
       cursor: pointer;
@@ -54,11 +54,8 @@
       margin-right: -5px;
     }
 
-    /* iPhone (iOS) Safari Engelini Aşan Sarı Menü Kodu */
+    /* Android ve tüm cihazlar için zorunlu Sarı Menü stili */
     select { 
-      -webkit-appearance: none; /* iPhone'un beyaz menü dayatmasını kapatır */
-      -moz-appearance: none;
-      appearance: none;
       width: 100%; 
       padding: 12px; 
       margin-top: 5px; 
@@ -66,13 +63,9 @@
       border-radius: 6px; 
       border: 2px solid #F9A825; 
       font-size: 15px; 
-      background-color: #FBC02D; /* Ana Sarı Renk */
-      color: #000; 
+      background-color: #FFF59D !important; 
+      color: #000 !important; 
       font-weight: bold;
-      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px top 50%;
-      background-size: 12px auto;
     }
     
     button.full-width { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 10px; border-radius: 6px; border: none; font-size: 15px; }
@@ -92,18 +85,32 @@
       text-align: center;
       border: 1px solid #ccc;
     }
-    .leaflet-routing-container { display: none !important; }
+    
+    /* İŞTE BURASI YENİ: Sağa/Sola Dön Kutusunu Açtık ve Mobilde Düzgün Görünmesini Sağladık */
+    .leaflet-routing-container {
+      background-color: rgba(255, 255, 255, 0.95) !important;
+      padding: 10px !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
+      margin-top: 10px !important;
+      max-height: 35vh !important; /* Ekranın sadece alt kısmını kaplasın */
+      overflow-y: auto !important; /* Kaydırılabilir olsun */
+      font-size: 14px !important;
+      width: 260px !important;
+      color: #000 !important;
+    }
+    .leaflet-routing-alt h2 { display: none; } /* Kutudaki gereksiz İngilizce başlığı gizler */
   </style>
 </head>
 <body>
 
-  <button id="openMenuBtn" onclick="toggleMenu()">🔍 Rota / Menü</button>
+  <button id="openMenuBtn" onclick="toggleMenu()">🗺️ Menüyü Aç</button>
 
   <div id="controlPanel">
     <button class="close-btn" onclick="toggleMenu()">✖</button>
     <h3 style="margin-top: 0; margin-bottom: 20px; color: #0033a0; text-align: left;">İTÜ Navigasyon</h3>
     
-    <button class="btn-gps full-width" onclick="useCurrentLocation()">📍 Konumumu Bul</button>
+    <button class="btn-gps full-width" onclick="useCurrentLocation()">📍 Konumumu Bul (GPS)</button>
 
     <label><b>Neredesin?</b></label>
     <select id="startSelect">
@@ -266,7 +273,7 @@
         map.removeControl(routingControl);
       }
 
-      // Araba rotasına düşmesini engelleyen KESİN yaya yolları sunucusu ayarı
+      // Adım Adım Yol Tarifi (Sağa Dön, Sola Dön) Kutusu artık aktif
       routingControl = L.Routing.control({
         waypoints: [
           L.latLng(startLat, startLng),
@@ -274,7 +281,7 @@
         ],
         router: L.Routing.osrmv1({
           serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1',
-          profile: 'driving' // Sunucu zaten sadece yaya yollarını barındırdığı için çökmesini engeller
+          profile: 'foot' 
         }),
         lineOptions: {
           styles: [{color: '#e63946', opacity: 0.9, weight: 6}] 
@@ -292,6 +299,7 @@
         infoBox.style.display = "block";
         infoBox.innerHTML = `🚶‍♂️ <b>Mesafe:</b> ${distKm} km <br> ⏱️ <b>Tahmini Yürüme:</b> ~${timeMin} dk`;
         
+        // Rotayı bulduğunda ana paneli kapatır, böylece haritada sağa/sola dön talimatlarıyla baş başa kalırsın
         setTimeout(() => { toggleMenu(); }, 1200);
       });
 
