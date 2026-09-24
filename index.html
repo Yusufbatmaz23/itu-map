@@ -19,8 +19,8 @@
       z-index: 1000;
       background: white;
       padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.4);
       width: 280px;
       max-height: 85vh;
       overflow-y: auto;
@@ -36,8 +36,8 @@
       color: white;
       font-weight: bold;
       border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
+      padding: 12px 18px;
+      border-radius: 8px;
       cursor: pointer;
       display: none;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
@@ -47,46 +47,50 @@
       float: right;
       background: none;
       border: none;
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
-      color: #555;
+      color: #333;
       margin-top: -5px;
       margin-right: -5px;
     }
 
-    /* Menüleri Sarı ve Siyah Yapma */
+    /* iPhone (iOS) Safari Engelini Aşan Sarı Menü Kodu */
     select { 
+      -webkit-appearance: none; /* iPhone'un beyaz menü dayatmasını kapatır */
+      -moz-appearance: none;
+      appearance: none;
       width: 100%; 
-      padding: 10px; 
+      padding: 12px; 
       margin-top: 5px; 
-      margin-bottom: 10px; 
-      border-radius: 4px; 
-      border: 2px solid #FBC02D; 
-      font-size: 14px; 
-      background-color: #FFF59D; /* Arka plan sarı */
-      color: #000; /* Yazı siyah */
-      font-weight: bold;
-    }
-    option, optgroup { 
-      background-color: #FFF59D; 
+      margin-bottom: 15px; 
+      border-radius: 6px; 
+      border: 2px solid #F9A825; 
+      font-size: 15px; 
+      background-color: #FBC02D; /* Ana Sarı Renk */
       color: #000; 
+      font-weight: bold;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px top 50%;
+      background-size: 12px auto;
     }
     
-    button.full-width { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
-    .btn-route { background: #0033a0; color: white; font-weight: bold; cursor: pointer; border: none; padding: 12px; font-size: 15px; }
+    button.full-width { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 10px; border-radius: 6px; border: none; font-size: 15px; }
+    .btn-route { background: #0033a0; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
     .btn-route:hover { background: #002277; }
-    .btn-gps { background: #28a745; color: white; font-weight: bold; cursor: pointer; border: none; padding: 10px; margin-bottom: 15px; }
+    .btn-gps { background: #28a745; color: white; font-weight: bold; cursor: pointer; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
     .btn-gps:hover { background: #218838; }
     
     #routeInfo {
       display: none;
       background: #e9ecef;
-      padding: 10px;
-      border-radius: 5px;
+      padding: 12px;
+      border-radius: 6px;
       margin-top: 10px;
-      font-size: 14px;
+      font-size: 15px;
       color: #333;
       text-align: center;
+      border: 1px solid #ccc;
     }
     .leaflet-routing-container { display: none !important; }
   </style>
@@ -97,7 +101,7 @@
 
   <div id="controlPanel">
     <button class="close-btn" onclick="toggleMenu()">✖</button>
-    <h3 style="margin-top: 0; color: #0033a0; text-align: left;">İTÜ Navigasyon</h3>
+    <h3 style="margin-top: 0; margin-bottom: 20px; color: #0033a0; text-align: left;">İTÜ Navigasyon</h3>
     
     <button class="btn-gps full-width" onclick="useCurrentLocation()">📍 Konumumu Bul</button>
 
@@ -180,7 +184,6 @@
   <script>
     const map = L.map('map').setView([41.1065, 29.0235], 16);
 
-    // Google Haritalar Sokak Görünümü (Tüm detaylar, binalar, yollar burada)
     L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: '&copy; Google Maps'
@@ -190,7 +193,7 @@
     let userLocationMarker = null;
     let gpsLat = null;
     let gpsLng = null;
-    let watchId = null; // Canlı takip için
+    let watchId = null; 
 
     function toggleMenu() {
       const panel = document.getElementById("controlPanel");
@@ -216,7 +219,7 @@
           gpsLng = position.coords.longitude;
           
           if(userLocationMarker) { map.removeLayer(userLocationMarker); }
-          userLocationMarker = L.circleMarker([gpsLat, gpsLng], {color: '#007bff', radius: 8, fillOpacity: 0.9, weight: 2, color: 'white'}).addTo(map).bindPopup("Buradasınız!").openPopup();
+          userLocationMarker = L.circleMarker([gpsLat, gpsLng], {color: '#007bff', radius: 9, fillOpacity: 1, weight: 3, color: 'white'}).addTo(map).bindPopup("Buradasınız!").openPopup();
           map.setView([gpsLat, gpsLng], 17);
           
           let startSelect = document.getElementById("startSelect");
@@ -263,7 +266,7 @@
         map.removeControl(routingControl);
       }
 
-      // Rotayı Çiz
+      // Araba rotasına düşmesini engelleyen KESİN yaya yolları sunucusu ayarı
       routingControl = L.Routing.control({
         waypoints: [
           L.latLng(startLat, startLng),
@@ -271,7 +274,7 @@
         ],
         router: L.Routing.osrmv1({
           serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1',
-          profile: 'foot' 
+          profile: 'driving' // Sunucu zaten sadece yaya yollarını barındırdığı için çökmesini engeller
         }),
         lineOptions: {
           styles: [{color: '#e63946', opacity: 0.9, weight: 6}] 
@@ -289,16 +292,12 @@
         infoBox.style.display = "block";
         infoBox.innerHTML = `🚶‍♂️ <b>Mesafe:</b> ${distKm} km <br> ⏱️ <b>Tahmini Yürüme:</b> ~${timeMin} dk`;
         
-        // Rota çizildikten 1 saniye sonra menüyü kapat
-        setTimeout(() => { toggleMenu(); }, 1000);
+        setTimeout(() => { toggleMenu(); }, 1200);
       });
 
-      // CANLI NAVİGASYON (BENİ TAKİP ET) EKLENTİSİ
       if (startValue === "current" && navigator.geolocation) {
-        // Varsa eski takibi durdur
         if (watchId) navigator.geolocation.clearWatch(watchId);
         
-        // Sen yürüdükçe mavi noktayı ve haritayı güncelle
         watchId = navigator.geolocation.watchPosition(function(position) {
           let currentLat = position.coords.latitude;
           let currentLng = position.coords.longitude;
@@ -306,7 +305,6 @@
           if(userLocationMarker) {
             userLocationMarker.setLatLng([currentLat, currentLng]);
           }
-          // Haritayı sürekli senin olduğun yere merkezle (Navigasyon Hissi)
           map.setView([currentLat, currentLng], 18);
         }, function(error) {
           console.log("Hareket takibi yapılamıyor.");
